@@ -23,6 +23,7 @@ import org.apache.commons.io.IOUtils;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -76,10 +77,7 @@ public class MainActivity extends AppCompatActivity {
                 Toast.makeText(getApplicationContext(), "Peer discovery Unsuccessful", Toast.LENGTH_LONG).show();
             }
         });
-
-
         //Log.e("Back","To main activity");
-
     }
 
     /**
@@ -121,9 +119,6 @@ public class MainActivity extends AppCompatActivity {
         return super.onOptionsItemSelected(item);
     }
 
-
-
-
     private class MyReceiver extends BroadcastReceiver  {
 
         private WifiP2pManager mManager;
@@ -132,6 +127,7 @@ public class MainActivity extends AppCompatActivity {
         public Context context;
         private List peers = new ArrayList();
         public Intent intent;
+        int i=0;
 
         public MyReceiver(WifiP2pManager manager, WifiP2pManager.Channel channel,
                           MainActivity activity, Context context) {
@@ -168,7 +164,7 @@ public class MainActivity extends AppCompatActivity {
                     mManager.requestPeers(mChannel, peerListListener);
                 }
 
-                Log.e("The list of", "P2P peers has changed");
+               // Log.e("The list of", "P2P peers has changed");
 
             } else if (WifiP2pManager.WIFI_P2P_CONNECTION_CHANGED_ACTION.equals(action)) {
 
@@ -185,15 +181,14 @@ public class MainActivity extends AppCompatActivity {
                 Toast.makeText(context, "Changed Device Config", Toast.LENGTH_LONG).show();
 
             }
-
         }
-
 
         public void connect() {
             WifiP2pConfig config = new WifiP2pConfig();
             WifiP2pDevice device = (WifiP2pDevice) peers.get(0);
             config.deviceAddress = device.deviceAddress;
             config.wps.setup = WpsInfo.PBC;
+            config.groupOwnerIntent = 0;
 
             mManager.connect(mChannel, config, new WifiP2pManager.ActionListener() {
 
@@ -202,7 +197,6 @@ public class MainActivity extends AppCompatActivity {
                     Log.e("Connecting to Kyles Tab", "YES");
 
                 }
-
 
                 @Override
                 public void onFailure(int i) {
@@ -213,78 +207,19 @@ public class MainActivity extends AppCompatActivity {
 
             mManager.requestConnectionInfo(mChannel, new WifiP2pManager.ConnectionInfoListener() {
                 @Override
+
                 public void onConnectionInfoAvailable(final WifiP2pInfo info) {
                     Log.e("In =","connection info");
                     if(info.groupFormed){
-                        Log.e("GROUP","FORMED");
-                        new FileServerAsyncTask(getApplicationContext(), info.groupOwnerAddress.toString()).execute();
-                       /* ServerSocket serverSocket = null;
-                        try {
-                            serverSocket = new ServerSocket(8888);
-                            Socket client = serverSocket.accept();
-                        }
-                        catch(IOException e){
-                            e.printStackTrace();
-                        }*/
+                        Log.e("GROUP FORMER",info.groupOwnerAddress.getHostAddress());
 
-                    }   /*
-                            ServerSocket serverSocket = null;
-                            try {
-                                serverSocket = new ServerSocket(8888);
-                                Socket client = serverSocket.accept();
+                        new FileServerAsyncTask(getApplicationContext(),info.groupOwnerAddress.getHostAddress()).execute();
 
-
-                                InputStream inputstream = client.getInputStream();
-
-                                byte[] buffer = IOUtils.toByteArray(inputstream);
-                                String data = new String(buffer, "UTF-8");
-                                Log.e("DATA:", data);
-                                Toast.makeText(context, "Data Transfer successful", Toast.LENGTH_LONG).show();
-                                //copyFile(inputstream, new FileOutputStream(f));
-                                serverSocket.close();
-
-                            } catch (IOException e) {
-                                e.printStackTrace();
-                            }*/
-
-
-                    // NetworkInfo networkInfo = mManager.EXTRA_NETWORK_INFO;
-                    // NetworkInfo networkInfo = intent.getParcelableExtra(mManager.EXTRA_NETWORK_INFO);
-                    // new FileServerAsyncTask(getApplicationContext());
-
-                    // InetAddre   ss from WifiP2pInfo struct.
-                    // if (info != null) {
-                    //   String groupOwnerAddress = info.groupOwnerAddress.getHostAddress();
-                    //    Log.e("GROUP OWNER ADD", groupOwnerAddress);
-                    //Log.e("Kyle Tablet", device.deviceAddress);
-                    //new FileServerAsyncTask(getApplicationContext());
-                    // }
-
-                    //  try {
-                    //    Thread.sleep(50000);                 //1000 milliseconds is one second.
-                    //} catch (InterruptedException ex) {
-                    //   Thread.currentThread().interrupt();
-                    //}
-                    //                 After the group negotiation, we can determine the group owner.
-
-
+                    i++;
+                    }
                 }
             });
-
-/*
-
-
-            });*/
-
-
-
-
         }
-
-
-
-
-
 
         public WifiP2pManager.PeerListListener peerListListener = new WifiP2pManager.PeerListListener() {
             @Override
@@ -303,11 +238,8 @@ public class MainActivity extends AppCompatActivity {
                     Log.e("YES", peers.size() + "Devices Found");
                     connect();
                 }
-
             }
         };
-
-
     }
 
     public static class FileServerAsyncTask extends AsyncTask {
@@ -319,7 +251,6 @@ public class MainActivity extends AppCompatActivity {
         Socket socket = new Socket();
         byte buf[] = new byte[1024];
 
-
         public FileServerAsyncTask(Context context, String host) {
             this.context = context;
             this.host = host;
@@ -329,83 +260,27 @@ public class MainActivity extends AppCompatActivity {
         @Override
         protected Object doInBackground(Object[] objects) {
             Log.e("Its","here");
+
             if(host!= null) {
 
                 Log.e("HOST:",host);
                 try {
                     socket.bind(null);
-                    socket.connect((new InetSocketAddress(host,port)), 500);
+                    socket.connect((new InetSocketAddress(host,port)), 8000);
+                    String data ="This is the data";
+                    buf = data.getBytes();
+                    OutputStream outputStream = socket.getOutputStream();
+                    int len = buf.length;
+                    outputStream.write(buf, 0 , len);
 
+                    outputStream.close();
                     
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
-
-
             }
-
-/*
-            ServerSocket serverSocket = null;
-            try {
-                serverSocket = new ServerSocket(8888);
-                Socket client = serverSocket.accept();
-                InputStream inputstream = client.getInputStream();
-
-                byte[] buffer = IOUtils.toByteArray(inputstream);
-                String data = new String(buffer, "UTF-8");
-                Log.e("DATA:", data);
-                //Toast.makeText(context, "Data Transfer successful", Toast.LENGTH_LONG).show();
-                serverSocket.close();
-
-            }
-            catch(IOException e){
-                e.printStackTrace();
-            }*/
-
             return null;
         }
-
-       /* @Override
-        protected String doInBackground(Void... params) {
-
-            /**
-             * Create a server socket and wait for client connections. This
-             * call blocks until a connection is accepted from a client
-             */
-
-        // String string = "This stream is up and running...@Mayank Kale";
-        //byte[] b = string.getBytes();
-/*
-            Log.e("Inside", "AsyncTask");
-            Log.e("Inside", "AsyncTask");
-
-            try {
-                Thread.sleep(50000);                 //1000 milliseconds is one second.
-            } catch (InterruptedException ex) {
-                Thread.currentThread().interrupt();
-            }*/
-
-              /*  ServerSocket serverSocket = new ServerSocket(8888);
-                Socket client = serverSocket.accept();
-
-
-                InputStream inputstream = client.getInputStream();
-
-                byte[] buffer = IOUtils.toByteArray(inputstream);
-                String data = new String(buffer, "UTF-8");
-                Log.e("DATA:", data);
-                Toast.makeText(context, "Data Transfer successful", Toast.LENGTH_LONG).show();
-                //copyFile(inputstream, new FileOutputStream(f));
-                serverSocket.close();
-*/
-        //    return null;
-        //  }
-
-
-        /**
-         * Start activity that can handle the JPEG image
-         */
-
     }
 }
 
