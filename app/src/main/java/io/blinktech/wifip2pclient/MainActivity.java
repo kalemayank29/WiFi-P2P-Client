@@ -1,5 +1,7 @@
 package io.blinktech.wifip2pclient;
 
+import android.app.Activity;
+import android.app.Application;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -37,6 +39,12 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
+class MyAppApplication extends Application {
+
+    public static int count = 0;
+
+}
+
 public class MainActivity extends AppCompatActivity {
 
     private final IntentFilter intentFilter = new IntentFilter();
@@ -44,6 +52,7 @@ public class MainActivity extends AppCompatActivity {
     WifiP2pManager.Channel thisChannel;
     MyReceiver receiver;
     Button button;
+    public static int function_count = 0;
 
 
     @Override
@@ -232,7 +241,7 @@ public class MainActivity extends AppCompatActivity {
                     Log.e("In =","connection info");
                     if(info.groupFormed){
                         Log.e("GROUP FORMER",info.groupOwnerAddress.getHostAddress());
-
+                    if(MyAppApplication.count == 0)
                         new FileServerAsyncTask(getApplicationContext(),info.groupOwnerAddress.getHostAddress()).execute();
 
                     //i++;
@@ -270,8 +279,10 @@ public class MainActivity extends AppCompatActivity {
         int len;
         Socket socket = new Socket();
         byte buf[] = new byte[1024];
+        //Activity main;
 
         public FileServerAsyncTask(Context context, String host) {
+          //  this.main = main;
             this.context = context;
             this.host = host;
 
@@ -287,7 +298,7 @@ public class MainActivity extends AppCompatActivity {
                 try {
                     socket.bind(null);
                     socket.connect((new InetSocketAddress(host,port)), 8000);
-                    String data ="This is the data";
+                    //String data ="This is the data";
 
                     HashMap<String,String> map = new HashMap<String, String>();
                     map.put("Mayank","Kale");
@@ -297,13 +308,15 @@ public class MainActivity extends AppCompatActivity {
                     ObjectOutput out = null;
                     out = new ObjectOutputStream(bos);
                     out.writeObject(map);
-                    buf = bos.toByteArray();
+                    byte[] array = bos.toByteArray();
                    // buf = data.getBytes();
                     OutputStream outputStream = socket.getOutputStream();
-                    int len = buf.length;
-                    outputStream.write(buf, 0 , len);
+                    int len = array.length;
+                    outputStream.write(array, 0 , len);
 
                     outputStream.close();
+                    //main.function_count++;
+                    MyAppApplication.count++;
                     
                 } catch (IOException e) {
                     e.printStackTrace();
