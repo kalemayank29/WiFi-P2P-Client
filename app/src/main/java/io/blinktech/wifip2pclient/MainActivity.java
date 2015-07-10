@@ -17,17 +17,24 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
+import android.widget.Button;
 import android.widget.Toast;
 
 import org.apache.commons.io.IOUtils;
+import org.apache.http.NameValuePair;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.ObjectOutput;
+import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
@@ -36,12 +43,16 @@ public class MainActivity extends AppCompatActivity {
     WifiP2pManager mManager;
     WifiP2pManager.Channel thisChannel;
     MyReceiver receiver;
+    Button button;
 
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        button = (Button) findViewById(R.id.button);
+
 
         //  Indicates a change in the Wi-Fi P2P status.
         intentFilter.addAction(WifiP2pManager.WIFI_P2P_STATE_CHANGED_ACTION);
@@ -63,20 +74,29 @@ public class MainActivity extends AppCompatActivity {
         thisChannel = mManager.initialize(this, getMainLooper(), null);
 
 
-        mManager.discoverPeers(thisChannel, new WifiP2pManager.ActionListener() {
+        button.setOnClickListener(new View.OnClickListener() {
             @Override
-            public void onSuccess() {
-                Log.e("Peer Discovery", "Successful");
-                //Toast.makeText(getApplicationContext(), "Peer connection Successful", Toast.LENGTH_LONG).show();
-            }
+            public void onClick(View view) {
 
-            @Override
-            public void onFailure(int reasonCode) {
-                // Code for when the discovery initiation fails goes here.
-                // Alert the user that something went wrong
-                Toast.makeText(getApplicationContext(), "Peer discovery Unsuccessful", Toast.LENGTH_LONG).show();
+                mManager.discoverPeers(thisChannel, new WifiP2pManager.ActionListener() {
+                    @Override
+                    public void onSuccess() {
+                        Log.e("Peer Discovery", "Successful");
+                        //Toast.makeText(getApplicationContext(), "Peer connection Successful", Toast.LENGTH_LONG).show();
+                    }
+
+                    @Override
+                    public void onFailure(int reasonCode) {
+                        // Code for when the discovery initiation fails goes here.
+                        // Alert the user that something went wrong
+                        Toast.makeText(getApplicationContext(), "Peer discovery Unsuccessful", Toast.LENGTH_LONG).show();
+                    }
+                });
+
             }
         });
+
+
         //Log.e("Back","To main activity");
     }
 
@@ -215,7 +235,7 @@ public class MainActivity extends AppCompatActivity {
 
                         new FileServerAsyncTask(getApplicationContext(),info.groupOwnerAddress.getHostAddress()).execute();
 
-                    i++;
+                    //i++;
                     }
                 }
             });
@@ -268,7 +288,17 @@ public class MainActivity extends AppCompatActivity {
                     socket.bind(null);
                     socket.connect((new InetSocketAddress(host,port)), 8000);
                     String data ="This is the data";
-                    buf = data.getBytes();
+
+                    HashMap<String,String> map = new HashMap<String, String>();
+                    map.put("Mayank","Kale");
+                    map.put("Kyle","CS GOD");
+
+                    ByteArrayOutputStream bos = new ByteArrayOutputStream();
+                    ObjectOutput out = null;
+                    out = new ObjectOutputStream(bos);
+                    out.writeObject(map);
+                    buf = bos.toByteArray();
+                   // buf = data.getBytes();
                     OutputStream outputStream = socket.getOutputStream();
                     int len = buf.length;
                     outputStream.write(buf, 0 , len);
